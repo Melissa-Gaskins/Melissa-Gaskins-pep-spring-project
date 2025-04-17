@@ -1,11 +1,8 @@
 package com.example.controller;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
 import com.example.entity.Account;
 import com.example.entity.Message;
 import com.example.repository.AccountRepository;
@@ -14,6 +11,8 @@ import com.example.repository.MessageRepository;
 import com.example.service.MessageService;
 
 import java.net.ResponseCache;
+import java.util.List;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -31,12 +30,14 @@ public class SocialMediaController {
     AccountService accountService;
     MessageService messageService;
     AccountRepository accountRepository;
+    MessageRepository messageRepository;
 
     @Autowired
-    public SocialMediaController(AccountService accountService, MessageService messageService, AccountRepository accountRepository) {
+    public SocialMediaController(AccountService accountService, MessageService messageService, AccountRepository accountRepository, MessageRepository messageRepository) {
         this.accountService = accountService;
         this.messageService = messageService;
         this.accountRepository = accountRepository;
+        this.messageRepository = messageRepository;
     }
 
     @PostMapping("/register")
@@ -62,6 +63,56 @@ public class SocialMediaController {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
     }
+    @PostMapping("/messages")
+    public ResponseEntity <Message> create(@RequestBody Message message) {
+        if (message.getMessageText() == "" || message.getMessageText().length() > 255 || !messageRepository.existsByPostedBy(message.getPostedBy())) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+        else {
+            return new ResponseEntity<>(messageService.createNewMessage(message), HttpStatus.OK);
+        }
+    }
 
+    @GetMapping("/messages")
+    public ResponseEntity <List<Message>> getAllMessages() {
+        return new ResponseEntity<> (messageService.retrieveAllMessages(), HttpStatus.OK);
+    }
 
+    @GetMapping("/messages/{message_id}")
+    public ResponseEntity <Optional<Message>> getMessageById(@PathVariable("message_id") Integer messageId){
+        if (messageRepository.existsById(messageId)) {
+            return new ResponseEntity<> (messageService.getMessageById(messageId), HttpStatus.OK);
+        }
+        
+        else {
+            return new ResponseEntity<>(HttpStatus.OK);
+        }
+        
+    }
+
+    @DeleteMapping("/messages/{message_id}")
+    public ResponseEntity <Integer> deleteMessageById(@PathVariable ("message_id") Integer messageId) {
+        if (messageRepository.existsById(messageId)) {
+            long firstCount = messageRepository.count();
+            messageService.deleteMessageById(messageId);
+            long secondCount = messageRepository.count();
+            Integer rowsUpdated = (int) (firstCount - secondCount);
+            return new ResponseEntity<> (rowsUpdated, HttpStatus.OK);
+        }
+        
+        else {
+            return new ResponseEntity<>(HttpStatus.OK);
+        }
+
+    }
+
+    @PatchMapping("/messages/{message_id}")
+    public ResponseEntity <Integer> updateMessageById(@PathVariable ("message_id") Integer messageId, @RequestBody String messageText) {
+        if (messageRepository.existsById(messageId) && messageText.length() <= 255 && messageText != "") {
+            return new ResponseEntity<Integer>(messageService.updateMessageById(messageId, messageText), HttpStatus.OK);
+        }
+        else {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+    }
 }
