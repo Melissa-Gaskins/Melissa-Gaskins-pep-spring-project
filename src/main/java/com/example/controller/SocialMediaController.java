@@ -12,6 +12,7 @@ import com.example.service.MessageService;
 
 import java.net.ResponseCache;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -107,12 +108,18 @@ public class SocialMediaController {
     }
 
     @PatchMapping("/messages/{message_id}")
-    public ResponseEntity <Integer> updateMessageById(@PathVariable ("message_id") Integer messageId, @RequestBody String messageText) {
-        if (messageRepository.existsById(messageId) && messageText.length() <= 255 && messageText != "") {
-            return new ResponseEntity<Integer>(messageService.updateMessageById(messageId, messageText), HttpStatus.OK);
+    public ResponseEntity <Integer> updateMessageById(@PathVariable ("message_id") Integer messageId, @RequestBody Map <String, String> messageText) {
+        String text = messageText.get("messageText");
+        if (messageRepository.existsById(messageId) && text.length() <= 255 && !text.isBlank()) {
+            return new ResponseEntity<Integer>(messageService.updateMessageById(messageId, text), HttpStatus.OK);
         }
         else {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
+    }
+
+    @GetMapping("/accounts/{account_id}/messages")
+    public ResponseEntity <List<Message>> getMessagesByUserId(@PathVariable ("account_id") Integer userId) {
+        return new ResponseEntity<>(messageService.getMessagesByPostedBy(userId), HttpStatus.OK);
     }
 }

@@ -2,6 +2,8 @@ package com.example.repository;
 
 import com.example.entity.Message;
 
+import java.util.List;
+
 import javax.transaction.Transactional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -14,6 +16,7 @@ import org.springframework.data.repository.query.Param;
 @Repository
 public interface MessageRepository extends JpaRepository<Message, Integer> {
     boolean existsByPostedBy(Integer posted_by);
+    List<Message> findByPostedBy(Integer posted_by);
     @Modifying
     @Query("UPDATE Message messages SET messages.messageText = :messageText WHERE messages.id = :id")
     int updateText (@Param ("messageText") String messageText, @Param ("id") Integer id);

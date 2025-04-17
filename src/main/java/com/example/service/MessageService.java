@@ -37,4 +37,8 @@ public class MessageService {
     public int updateMessageById(Integer messageId, String messageText) {
         return messageRepository.updateText(messageText, messageId);
     }
+
+    public List<Message> getMessagesByPostedBy(Integer userId) {
+        return messageRepository.findByPostedBy(userId);
+    }
 }
